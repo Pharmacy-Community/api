@@ -9,11 +9,15 @@ django-debug-toolbar = "*"
 djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
+pytest = "*"
+pytest-django = "*"
 
 [dev-packages]
 autopep8 = "*"
 pytest = "*"
 pytest-django = "*"
+model-bakery = "*"
+pytest-watch = "*"
 
 [requires]
 python_version = "3.9"
