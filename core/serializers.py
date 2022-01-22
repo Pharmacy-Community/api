@@ -8,8 +8,14 @@ class SuppliersSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'address', 'contact']
 
 
-class PurchaseSerializer(serializers.ModelSerializer):
+class PurchasesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Purchase
         # TODO Add Purchase Items
         fields = ['id', 'date', 'invoice', 'supplier']
+
+
+class ProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Product
+        fields = ['id', 'name', 'generic_name']
