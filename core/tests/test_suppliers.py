@@ -1,8 +1,9 @@
+from django.http import response
 import pytest
 from model_bakery import baker
 from rest_framework import status
 
-from core.models import Supplier
+from core.models import Purchase, Supplier
 
 
 @pytest.fixture
@@ -72,7 +73,7 @@ class TestCreateSupplier():
 
 
 @pytest.mark.django_db
-class TestViewSupplier:
+class TestViewSuppliers:
     @pytest.mark.skip
     def test_if_un_authenticated_user_can_not_view_suppliers(self, view_suppliers):
         response = view_suppliers()
@@ -84,10 +85,16 @@ class TestViewSupplier:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_if_authorised_user_can_view_suppliers(self, authenticate, view_suppliers):
-        # TODO Add Sample Suppliers
+        number_of_sample_suppliers = 5
+        # Add Sample Suppliers
+        [baker.make(Supplier)for _ in range(number_of_sample_suppliers)]
+
         authenticate(permissions=['Can view supplier'])
+
         response = view_suppliers()
+
         assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == number_of_sample_suppliers
 
 
 @pytest.fixture
@@ -97,18 +104,42 @@ def delete_supplier(api_client):
     return do_delete_supplier
 
 
-@pytest.mark.django_dbb
+@pytest.mark.django_db
 class TestDeleteSupplier:
 
-    def add_sample_supplier(self):
-        return baker.make(Supplier)
+    @pytest.mark.skip
+    def test_if_anonymous_user_can_not_delete_a_supplier(self, delete_supplier):
+        supplier = baker.make(Supplier)
+        response = delete_supplier(supplier.id)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_if_un_authenticated_user_can_not_delete_supplier(self, delete_supplier):
-        pass
-# Add Supplier
+    def test_if_un_authorized_user_can_not_delete_a_supplier(self, authenticate, delete_supplier):
+        supplier = baker.make(Supplier)
+        authenticate()
+        response = delete_supplier(supplier.id)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-# Test Delete Supplier
-# No permissions
-# With purchases
-# Does not exist
-# Success
+    def test_if_authorised_user_can_delete_supplier(self, authenticate, delete_supplier):
+        supplier = baker.make(Supplier)
+        authenticate(permissions=['Can delete supplier'])
+
+        response = delete_supplier(supplier.id)
+        # TODO May need to check if id matches
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_if_handles_deleting_supplier_that_does_not_exist(self, authenticate, delete_supplier):
+        authenticate(permissions=['Can delete supplier'])
+        none_existent_supplier_id = 10
+        response = delete_supplier(none_existent_supplier_id)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.skip
+    def test_if_can_not_delete_suppliers_with_purchases(self, authenticate, delete_supplier):
+        purchase = baker.make(Purchase)
+        supplier = purchase.supplier
+
+        authenticate(permissions=['Can delete supplier'])
+
+        response = delete_supplier(supplier.id)
+        # TODO Fix Bug
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

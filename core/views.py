@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 from . import models
 from . import serializers
@@ -14,4 +13,9 @@ class PurchasesViewSet(viewsets.ModelViewSet):
         return models.Purchase.objects.all()
 
     def get_serializer_class(self):
-        return serializers.PurchaseSerializer
+        return serializers.PurchasesSerializer
+
+
+class ProductsViewSet(viewsets.ModelViewSet):
+    queryset = models.Product.objects.all()
+    serializer_class = serializers.ProductsSerializer
