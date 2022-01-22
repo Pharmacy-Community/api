@@ -1,6 +1,13 @@
+import imp
+import django
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+
+
+class User(AbstractUser):
+    email = models.EmailField(unique=True)
 
 
 class Account(models.Model):

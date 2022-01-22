@@ -135,3 +135,5 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissions'
     ]
 }
+
+AUTH_USER_MODEL = 'core.User'
