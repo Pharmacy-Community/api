@@ -11,6 +11,8 @@ markdown = "*"
 django-filter = "*"
 pytest = "*"
 pytest-django = "*"
+djoser = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 autopep8 = "*"
