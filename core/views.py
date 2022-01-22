@@ -11,3 +11,11 @@ class SuppliersViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         return serializers.SuppliersSerializer
+
+
+class PurchasesViewSet(viewsets.ModelViewSet):
+    def get_queryset(self):
+        return models.Purchase.objects.all()
+
+    def get_serializer_class(self):
+        return serializers.PurchaseSerializer

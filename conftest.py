@@ -1,5 +1,5 @@
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from rest_framework.test import APIClient
 
 
@@ -10,9 +10,15 @@ def api_client():
 
 @pytest.fixture
 def authenticate(api_client):
-    def do_authenticate(is_staff=False):
-        user = User(is_staff=is_staff)
-        return api_client.force_authenticate(
-            user=user
-        )
+    def do_authenticate(**kwargs):
+        user = User()
+        # Save the user incase of adding permissions
+        user.save()
+
+        # Add Properties to user
+        for permission in kwargs.get('permissions', []):
+            user_permission = Permission.objects.get(name=permission)
+            user.user_permissions.add(user_permission)
+
+        return api_client.force_authenticate(user=user)
     return do_authenticate
