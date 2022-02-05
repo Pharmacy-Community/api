@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'debug_toolbar',
     'rest_framework',
     'djoser',
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -136,13 +138,22 @@ REST_FRAMEWORK = {
     # 'DEFAULT_AUTHENTICATION_CLASSES': (
     #     'rest_framework_simplejwt.authentication.JWTAuthentication',
     # ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'core.permissions.FullDjangoModelPermissions'
-    ],
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'core.permissions.FullDjangoModelPermissions'
+    # ],
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}
+
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT',),
+    'AUTH_HEADER_TYPES': ('Bearer', 'JWT'),
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # TODO Change in production
 }
 
 AUTH_USER_MODEL = 'core.User'
+
+
+CORS_ORIGIN_ALLOW_ALL = True

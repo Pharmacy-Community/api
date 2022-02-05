@@ -13,6 +13,7 @@ pytest = "*"
 pytest-django = "*"
 djoser = "*"
 djangorestframework-simplejwt = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 autopep8 = "*"
