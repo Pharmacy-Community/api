@@ -82,12 +82,12 @@ class PackSizeAdmin(admin.ModelAdmin):
 @admin.register(models.Purchase)
 class PurchaseAdmin(admin.ModelAdmin):
     list_filter = ['date']
-    list_display = ['id', 'date', 'invoice', 'supplier', 'total']
+    list_display = ['id', 'date', 'invoice', 'supplier_id', 'total']
     inlines = [InventoryInline]
     search_fields = ['invoice__exact',
-                     'supplier__name__icontains']
+                     'supplier_id__name__icontains']
 
-    autocomplete_fields = ['supplier']
+    autocomplete_fields = ['supplier_id']
 
     def total(self, purchase):
         return purchase.total
@@ -95,7 +95,7 @@ class PurchaseAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
 
         form = super().get_form(request, obj, **kwargs)
-        supplier = form.base_fields["supplier"]
+        supplier = form.base_fields["supplier_id"]
 
         supplier.widget.can_delete_related = False
         supplier.widget.can_change_related = False
@@ -122,11 +122,11 @@ class SaleItemInline(admin.TabularInline):
 
 @admin.register(models.Sale)
 class SaleAdmin(admin.ModelAdmin):
-    autocomplete_fields = ['customer']
-    list_display = ['id', 'date', 'customer', 'total']
+    autocomplete_fields = ['customer_id']
+    list_display = ['id', 'date', 'customer_id', 'total']
     inlines = [SaleItemInline]
     list_filter = ['date']
-    search_fields = ['customer__name__icontains']
+    search_fields = ['customer_id__name__icontains']
 
     def total(self, sale):
         return sale.total
@@ -134,7 +134,7 @@ class SaleAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
 
         form = super().get_form(request, obj, **kwargs)
-        supplier = form.base_fields["customer"]
+        supplier = form.base_fields["customer_id"]
 
         supplier.widget.can_delete_related = False
         supplier.widget.can_change_related = False

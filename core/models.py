@@ -6,15 +6,28 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
 
+# TODO Add User profile image
 class User(AbstractUser):
     email = models.EmailField(unique=True)
 
 
 class Account(models.Model):
+    ACCOUNT_CATEGORIES = (
+        ('SUPPLIER', 'Supplier Account'),
+        ('CUSTOMER', 'Customer Account'),
+        ('CASH', 'Cash Account'),
+        ('BANK', 'Bank Account'),
+        ('MOBILE MONEY', 'Mobile Money Account'),
+    )
+    name = models.CharField(max_length=255,null=False, blank=False)
+    category = models.CharField(max_length=255, choices=ACCOUNT_CATEGORIES)
     balance = models.IntegerField()
 
     def __str__(self) -> str:
         return self.accountitem.id
+    
+    class Meta:
+        ordering=['name', 'id']
 
 
 class AccountItem(models.Model):
@@ -43,6 +56,9 @@ class Expense(models.Model):
 
     def __str__(self) -> str:
         return f"{self.details} for {self.amount}"
+    
+    class Meta:
+        ordering=['-date', 'id']
 
 
 class Product(models.Model):
@@ -70,7 +86,7 @@ class PackSize(models.Model):
 
 
 class Purchase(models.Model):
-    supplier = models.ForeignKey('Supplier', on_delete=models.PROTECT)
+    supplier_id = models.ForeignKey('Supplier', on_delete=models.PROTECT)
     date = models.DateField(auto_created=True)
     invoice = models.CharField(max_length=30)
 
@@ -111,7 +127,7 @@ class Sale(models.Model):
     # Payment Method
     created_at = models.DateTimeField(auto_now_add=True)
     date = models.DateField(auto_created=True)
-    customer = models.ForeignKey(
+    customer_id = models.ForeignKey(
         Customer, on_delete=models.PROTECT, blank=True, null=True)
 
     @property
