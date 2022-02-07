@@ -3,8 +3,7 @@ import django
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
-
+from django.contrib.contenttypes.fields import GenericForeignKey,GenericRelation
 
 # TODO Add User profile image
 class User(AbstractUser):
@@ -12,14 +11,19 @@ class User(AbstractUser):
 
 
 class Account(models.Model):
+    SUPPLIER_CATEGORY = ('SUPPLIER', 'Supplier Account')
+    CUSTOMER_CATEGORY = ('CUSTOMER', 'Customer Account')
+    CASH_CATEGORY = ('CASH', 'Cash Account')
+    BANK_CATEGORY = ('BANK', 'Bank Account')
+    MOBBILE_MONEY_CATEGORY = ('MOBILE MONEY', 'Mobile Money Account')
     ACCOUNT_CATEGORIES = (
-        ('SUPPLIER', 'Supplier Account'),
-        ('CUSTOMER', 'Customer Account'),
-        ('CASH', 'Cash Account'),
-        ('BANK', 'Bank Account'),
-        ('MOBILE MONEY', 'Mobile Money Account'),
+        SUPPLIER_CATEGORY,
+        CUSTOMER_CATEGORY,
+        CASH_CATEGORY,
+        BANK_CATEGORY,
+        MOBBILE_MONEY_CATEGORY,
     )
-    name = models.CharField(max_length=255,null=False, blank=False)
+    name = models.CharField(max_length=255,null=False, blank=False, unique=True)
     category = models.CharField(max_length=255, choices=ACCOUNT_CATEGORIES)
     balance = models.IntegerField()
 
@@ -50,6 +54,7 @@ class Customer(models.Model):
 
 
 class Expense(models.Model):
+    account_id = models.ForeignKey(Account, on_delete=models.CASCADE)
     date = models.DateField(auto_created=True)
     details = models.CharField(max_length=255)
     amount = models.PositiveIntegerField()
@@ -102,9 +107,9 @@ class Purchase(models.Model):
 
 
 class Inventory(models.Model):
-    purchase = models.ForeignKey(
+    purchase_id = models.ForeignKey(
         Purchase, on_delete=models.PROTECT, related_name='items')
-    product = models.ForeignKey('Product', on_delete=models.PROTECT)
+    product_id = models.ForeignKey('Product', on_delete=models.PROTECT)
 
     batch_number = models.CharField(max_length=20, null=True)
     expiry_date = models.DateField(null=True)
@@ -112,14 +117,18 @@ class Inventory(models.Model):
     pack_size = models.PositiveIntegerField()
     pack_cost = models.PositiveIntegerField()
     quantity = models.IntegerField()
-    availale_units = models.IntegerField()
+    available_units = models.IntegerField()
+
+    def save(self, *args, **kwargs):
+        self.available_units = self.pack_size * self.quantity
+        super().save(*args, **kwargs)
 
     @property
     def total(self):
         return self.pack_cost * self.quantity
 
     def __str__(self) -> str:
-        return f"{self.product.name}, {self.batch_number}:- {5} Left"
+        return f"{self.product_id.name}, {self.batch_number}:- {5} Left"
 
 
 class Sale(models.Model):
@@ -155,9 +164,23 @@ class SaleItem(models.Model):
 
 
 class Supplier(models.Model):
+    account_id = models.ForeignKey(Account, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, unique=True)
     contact = models.CharField(max_length=13, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        # Remove any posted id
+        if 'account_id' in kwargs:
+            kwargs.pop('account_id')
+
+        # Create Supplier Account
+        supplier_account = Account(
+            name=self.name,
+            category=Account.CUSTOMER_CATEGORY,
+            balance=0
+        )
+        super().save(*args, **kwargs, account=supplier_account)
 
     def __str__(self) -> str:
         return self.name

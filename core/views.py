@@ -18,13 +18,19 @@ class CustomersViewSet(viewsets.ModelViewSet):
 
 class ExpensesViewSet(viewsets.ModelViewSet):
     queryset = models.Expense.objects.all()
-    serializer_class = serializers.EpxensesSerializer
+    serializer_class = serializers.ExpensesSerializer
     filterset_fields = ['details'] #TODO Add date range, account, entrant 
 
 class GroupsViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = serializers.GroupSerializer
     
+
+class InventoryViewSet(viewsets.ModelViewSet):
+    queryset = models.Inventory.objects.all()
+    serializer_class = serializers.InventorySerializer
+    filterset_fields = ['product_id']
+
 
 class PurchasesViewSet(viewsets.ModelViewSet):
     queryset = models.Purchase.objects.all()

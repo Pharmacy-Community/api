@@ -8,6 +8,12 @@ class AccountsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Account
         fields = ['id', 'name', 'category', 'balance']
+    
+class AccountItemSerializer(serializers.ModelSerializer):
+    account = AccountsSerializer()
+    class Meta:
+        model = models.AccountItem
+        fields = ['id', 'account']
 
 
 class CustomersSerializer(serializers.ModelSerializer):
@@ -16,10 +22,16 @@ class CustomersSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'address', 'contact']
 
 
-class EpxensesSerializer(serializers.ModelSerializer):
+
+class ExpenseAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Account
+        fields = ['id', 'name']
+
+class ExpensesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Expense
-        fields = ['id', 'date', 'details', 'amount']
+        fields = ['id', 'date', 'details', 'amount', 'account_id']
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -27,6 +39,13 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = ['id', 'name']
 
+
+class InventorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Inventory
+        fields= ['id', 'purchase_id', 'product_id','batch_number', 'expiry_date', 'pack_size',
+        'pack_cost', 'quantity','available_units'
+        ]
 
 class PackSizesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,18 +55,23 @@ class PackSizesSerializer(serializers.ModelSerializer):
 
 class ProductsSerializer(WritableNestedModelSerializer):
     pack_sizes = PackSizesSerializer(many=True)
-
     class Meta:
         model = models.Product
         fields = ['id', 'name', 'generic_name', 'pack_sizes']
 
 
 
-class PurchasesSerializer(serializers.ModelSerializer):
+class PurchaseItemsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Inventory
+        fields = ['id', 'product_id', 'batch_number','expiry_date', 'pack_size','pack_cost','quantity']
+
+class PurchasesSerializer(WritableNestedModelSerializer):
+    items = PurchaseItemsSerializer(many=True)
     class Meta:
         model = models.Purchase
         # TODO Add Purchase Items
-        fields = ['id', 'date', 'invoice', 'supplier_id', 'total']
+        fields = ['id', 'date', 'invoice', 'supplier_id', 'total', 'items']
 
 
 class SalesSerializer(serializers.ModelSerializer):

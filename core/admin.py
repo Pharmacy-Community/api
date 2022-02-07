@@ -51,7 +51,7 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(models.Inventory)
 class InventoryAdmin(admin.ModelAdmin):
     list_filter = ['expiry_date']
-    list_display = ['product', 'batch_number',
+    list_display = ['product_id', 'batch_number',
                     'expiry_date', 'pack_cost', 'quantity']
 
 
@@ -63,7 +63,7 @@ class InventoryInline(admin.TabularInline):
     def get_formset(self, request, obj=None, **kwargs):
 
         formset = super().get_formset(request, obj, **kwargs)
-        product = formset.form.base_fields['product']
+        product = formset.form.base_fields['product_id']
 
         product.widget.can_add_related = False
         product.widget.can_delete_related = False
