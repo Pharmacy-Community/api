@@ -16,6 +16,7 @@ djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 drf-writable-nested = "*"
 rest-framework-generic-relations = "*"
+model-bakery = "*"
 
 [dev-packages]
 autopep8 = "*"

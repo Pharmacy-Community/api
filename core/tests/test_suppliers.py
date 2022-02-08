@@ -3,32 +3,33 @@ from core.models import Purchase, Supplier
 from model_bakery import baker
 from rest_framework import status
 
+SUPPLIERS_ENDPOINT = "/suppliers/"
 
 @pytest.fixture
 def create_supplier(api_client):
     def do_create_supplier(supplier):
-        return api_client.post('/suppliers/', supplier)
+        return api_client.post(SUPPLIERS_ENDPOINT, supplier)
     return do_create_supplier
 
 
 @pytest.fixture
 def view_suppliers(api_client):
     def do_view_suppliers():
-        return api_client.get('/suppliers/')
+        return api_client.get(SUPPLIERS_ENDPOINT)
     return do_view_suppliers
 
 
 @pytest.fixture
 def view_supplier(api_client):
     def do_view_supplier(supplier_id):
-        return api_client.get(f'/suppliers/{supplier_id}/')
+        return api_client.get(f'{SUPPLIERS_ENDPOINT}{supplier_id}/')
     return do_view_supplier
 
 
 @pytest.fixture
 def delete_supplier(api_client):
     def do_delete_supplier(supplier_id):
-        return api_client.delete(f'/suppliers/{supplier_id}/')
+        return api_client.delete(f'{SUPPLIERS_ENDPOINT}{supplier_id}/')
     return do_delete_supplier
 
 
