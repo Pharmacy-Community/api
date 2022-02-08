@@ -70,8 +70,23 @@ class PurchasesSerializer(WritableNestedModelSerializer):
     items = PurchaseItemsSerializer(many=True)
     class Meta:
         model = models.Purchase
-        # TODO Add Purchase Items
-        fields = ['id', 'date', 'invoice', 'supplier_id', 'total', 'items']
+        fields = ['id', 'date', 'invoice', 'supplier_id','total', 'items']
+    
+    def validate(self, data):
+        if data['total'] == sum([item['pack_cost']*item['quantity'] for item in data["items"]]):
+            return data
+        raise serializers.ValidationError("The total of the invoice does not match the total of the items")
+    
+
+    def create(self, validated_data):
+        # Create a purchase
+        # Reduce the supplier account
+        supplier = validated_data["supplier"]
+        supplier_account = supplier.account
+        supplier_account.balance=validated_data.total
+        supplier_account.save()
+        purchase = super()
+        return purchase
 
 
 class SalesSerializer(serializers.ModelSerializer):
@@ -81,9 +96,14 @@ class SalesSerializer(serializers.ModelSerializer):
 
 
 class SuppliersSerializer(serializers.ModelSerializer):
+    account_id = serializers.SerializerMethodField()
     class Meta:
         model = models.Supplier
-        fields = ['id', 'name', 'address', 'contact']
+        fields = ['id', 'name', 'address', 'contact', 'account_id']
+    
+    def get_account_id(self, supplier):
+        return supplier.account_id.id
+
 
 
 class UsersSerializer(serializers.ModelSerializer):

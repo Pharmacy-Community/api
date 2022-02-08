@@ -28,7 +28,7 @@ class Account(models.Model):
     balance = models.IntegerField()
 
     def __str__(self) -> str:
-        return self.accountitem.id
+        return self.name
     
     class Meta:
         ordering=['name', 'id']
@@ -91,13 +91,10 @@ class PackSize(models.Model):
 
 
 class Purchase(models.Model):
-    supplier_id = models.ForeignKey('Supplier', on_delete=models.PROTECT)
+    supplier = models.ForeignKey('Supplier', on_delete=models.PROTECT)
     date = models.DateField(auto_created=True)
     invoice = models.CharField(max_length=30)
-
-    @property
-    def total(self):
-        return sum(item.total for item in self.items.all())
+    total = models.PositiveIntegerField()
 
     def __str__(self) -> str:
         return self.invoice
@@ -164,7 +161,7 @@ class SaleItem(models.Model):
 
 
 class Supplier(models.Model):
-    account_id = models.ForeignKey(Account, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, unique=True)
     contact = models.CharField(max_length=13, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
@@ -177,10 +174,12 @@ class Supplier(models.Model):
         # Create Supplier Account
         supplier_account = Account(
             name=self.name,
-            category=Account.CUSTOMER_CATEGORY,
+            category=Account.SUPPLIER_CATEGORY[0],
             balance=0
         )
-        super().save(*args, **kwargs, account=supplier_account)
+        supplier_account.save()
+        self.account_id=supplier_account
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name
