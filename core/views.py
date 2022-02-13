@@ -21,7 +21,8 @@ class ExpensesViewSet(viewsets.ModelViewSet):
     queryset = models.Expense.objects.all()
     serializer_class = serializers.ExpensesSerializer
     # TODO Add date range, account, entrant
-    filterset_fields = ['details', 'account_id']
+    filterset_fields = ['account_id']
+    search_fields = ['details']
 
 
 class GroupsViewSet(viewsets.ModelViewSet):
