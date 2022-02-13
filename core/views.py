@@ -1,5 +1,7 @@
 from django.contrib.auth.models import Group
 from rest_framework import viewsets
+
+from core.filters import ExpensesFilter
 from . import models
 from . import serializers
 
@@ -20,8 +22,7 @@ class CustomersViewSet(viewsets.ModelViewSet):
 class ExpensesViewSet(viewsets.ModelViewSet):
     queryset = models.Expense.objects.all()
     serializer_class = serializers.ExpensesSerializer
-    # TODO Add date range, account, entrant
-    filterset_fields = ['account_id']
+    filterset_class = ExpensesFilter
     search_fields = ['details']
 
 

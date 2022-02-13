@@ -17,6 +17,7 @@ django-cors-headers = "*"
 drf-writable-nested = "*"
 rest-framework-generic-relations = "*"
 model-bakery = "*"
+django-crispy-forms = "*"
 
 [dev-packages]
 autopep8 = "*"
