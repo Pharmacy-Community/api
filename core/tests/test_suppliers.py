@@ -5,6 +5,7 @@ from rest_framework import status
 
 SUPPLIERS_ENDPOINT = "/suppliers/"
 
+
 @pytest.fixture
 def create_supplier(api_client):
     def do_create_supplier(supplier):
@@ -37,7 +38,6 @@ def delete_supplier(api_client):
 class TestCreateSupplier():
     required_permissions = ['Can add supplier']
 
-    @pytest.mark.skip
     def test_if_un_authenticated_user_returns_401_UNAUTHORIZED(self, create_supplier):
         response = create_supplier({'name': 'SupplierName'})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -79,34 +79,34 @@ class TestCreateSupplier():
 class TestViewSuppliers:
     required_permissions = ['Can view supplier']
 
-    @pytest.mark.skip
+    def add_sample_suppliers_to_db(self, number_of_sample_suppliers=5):
+        return [baker.make(Supplier)for _ in range(number_of_sample_suppliers)]
+
     def test_if_un_authenticated_user_can_not_view_suppliers(self, view_suppliers):
+        self.add_sample_suppliers_to_db()
         response = view_suppliers()
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_if_authenticated_user_with_out_permissions_can_not_view_suppliers(self, authenticate, view_suppliers):
+        self.add_sample_suppliers_to_db()
         authenticate()
         response = view_suppliers()
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_if_authorised_user_can_view_suppliers(self, authenticate, view_suppliers):
         number_of_sample_suppliers = 5
-        # Add Sample Suppliers
-        [baker.make(Supplier)for _ in range(number_of_sample_suppliers)]
-
+        self.add_sample_suppliers_to_db(number_of_sample_suppliers)
         authenticate(permissions=self.required_permissions)
-
         response = view_suppliers()
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()) == number_of_sample_suppliers
+        assert number_of_sample_suppliers == response.json()["count"]
 
 
 @pytest.mark.django_db
 class TestViewSupplier:
     required_permissions = ['Can view supplier']
 
-    @pytest.mark.skip
     def test_if_anonymous_user_can_not_view_supplier(self, view_supplier):
         supplier = baker.make(Supplier)
         response = view_supplier(supplier.id)
@@ -130,7 +130,8 @@ class TestViewSupplier:
             'id': supplier.id,
             'name': supplier.name,
             'address': supplier.address,
-            'contact': supplier.contact
+            'contact': supplier.contact,
+            'account_id': supplier.account_id
         }
 
     def test_if_can_not_view_a_supplier_that_does_not_exist(self, authenticate, view_supplier):
@@ -148,7 +149,6 @@ class TestViewSupplier:
 class TestDeleteSupplier:
     required_permissions = ['Can delete supplier']
 
-    @pytest.mark.skip
     def test_if_anonymous_user_can_not_delete_a_supplier(self, delete_supplier):
         supplier = baker.make(Supplier)
         response = delete_supplier(supplier.id)

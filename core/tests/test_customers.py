@@ -105,7 +105,7 @@ class TestViewCustomers:
         response = view_customers()
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()) == number_of_sample_customers
+        assert number_of_sample_customers == response.json()["count"]
 
 
 @pytest.mark.django_db

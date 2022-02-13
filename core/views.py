@@ -7,24 +7,27 @@ from . import serializers
 class AccountsViewSet(viewsets.ModelViewSet):
     queryset = models.Account.objects.all()
     serializer_class = serializers.AccountsSerializer
-    filter_fields = ['name']
+    filter_fields = ['name', 'category']
+
 
 class CustomersViewSet(viewsets.ModelViewSet):
     queryset = models.Customer.objects.all()
     serializer_class = serializers.CustomersSerializer
     filterset_fields = ['name']
-    search_fields=['name']
+    search_fields = ['name']
 
 
 class ExpensesViewSet(viewsets.ModelViewSet):
     queryset = models.Expense.objects.all()
     serializer_class = serializers.ExpensesSerializer
-    filterset_fields = ['details'] #TODO Add date range, account, entrant 
+    # TODO Add date range, account, entrant
+    filterset_fields = ['details', 'account_id']
+
 
 class GroupsViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = serializers.GroupSerializer
-    
+
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = models.Inventory.objects.all()
@@ -35,8 +38,9 @@ class InventoryViewSet(viewsets.ModelViewSet):
 class PurchasesViewSet(viewsets.ModelViewSet):
     queryset = models.Purchase.objects.all()
     serializer_class = serializers.PurchasesSerializer
-    filterset_fields =["supplier_id","invoice"]
-    search_fields=['invoice']
+    filterset_fields = ["supplier_id", "invoice"]
+    search_fields = ['invoice']
+
 
 class ProductsViewSet(viewsets.ModelViewSet):
     queryset = models.Product.objects.all()
@@ -48,14 +52,14 @@ class SalesViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SalesSerializer
     filter_fields = ['date', 'customer_id']
 
+
 class SuppliersViewSet(viewsets.ModelViewSet):
     queryset = models.Supplier.objects.all()
     serializer_class = serializers.SuppliersSerializer
     filterset_fields = ['name']
-    search_fields=['name']
+    search_fields = ['name']
 
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = models.User.objects.all()
     serializer_class = serializers.UsersSerializer
-    

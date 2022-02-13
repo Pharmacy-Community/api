@@ -1,23 +1,48 @@
 import pytest
 from rest_framework import status
 from model_bakery import baker
-from core.models import Product
+from core.models import Product, PackSize
+
+PRODUCTS_ENDPOINT = "/products/"
 
 
 @pytest.fixture
 def add_product(api_client):
     def do_add_product(product):
-        return api_client.post('/products/', product)
+        return api_client.post(PRODUCTS_ENDPOINT, product)
     return do_add_product
 
 
 @pytest.mark.django_db
 class TestAddProduct:
-    test_product = {'name': 'Product Name', 'generic_name': 'Generic Name'}
+    test_product = {
+        "name": "Product Name",
+        "generic_name": "Generic Name",
+        "pack_sizes": [
+            {
+                "units": 10,
+                "sale_price": 500
+            }
+        ]
+    }
 
     required_permissions = ['Can add product']
 
-    @pytest.mark.skip
+    def get_sample_test_product(self):
+        sample_product = baker.prepare(Product)
+        sample_pack_sizes = baker.prepare(PackSize, _quantity=5)
+        return {
+            "name": sample_product.name,
+            "generic_name": sample_product.generic_name,
+            "pack_sizes": [
+                {
+                    "units": pack_size.units,
+                    "sale_price": pack_size.sale_price
+                }
+                for pack_size in sample_pack_sizes
+            ]
+        }
+
     def test_anonymous_user_can_not_add_product(self, add_product):
         response = add_product(self.test_product)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -29,8 +54,8 @@ class TestAddProduct:
 
     def test_if_authorised_user_can_add_product(self, authenticate, add_product):
         authenticate(permissions=self.required_permissions)
-        response = add_product(self.test_product)
-        # TODO Do more checks, id, name, generic name
+        product = self.get_sample_test_product()
+        response = add_product(product)
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_if_authorised_user_with_bad_input(self, authenticate, add_product):
@@ -52,7 +77,9 @@ class TestAddProduct:
 
 @pytest.fixture
 def view_products(api_client):
-    return lambda: api_client.post('/products/')
+    def do_view_products():
+        return api_client.get(PRODUCTS_ENDPOINT)
+    return do_view_products
 
 
 class TestViewProducts:

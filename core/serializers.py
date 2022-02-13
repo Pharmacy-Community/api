@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from drf_writable_nested.serializers import WritableNestedModelSerializer
 from . import models
@@ -7,103 +8,134 @@ from . import models
 class AccountsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Account
-        fields = ['id', 'name', 'category', 'balance']
-    
+        fields = ["id", "name", "category", "balance"]
+
+
 class AccountItemSerializer(serializers.ModelSerializer):
     account = AccountsSerializer()
+
     class Meta:
         model = models.AccountItem
-        fields = ['id', 'account']
+        fields = ["id", "account"]
 
 
 class CustomersSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Customer
-        fields = ['id', 'name', 'address', 'contact']
-
+        fields = ["id", "name", "address", "contact", "account_id"]
 
 
 class ExpenseAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Account
-        fields = ['id', 'name']
+        fields = ["id", "name"]
+
 
 class ExpensesSerializer(serializers.ModelSerializer):
+    account_id = serializers.IntegerField()
+
     class Meta:
         model = models.Expense
-        fields = ['id', 'date', 'details', 'amount', 'account_id']
+        fields = ["id", "date", "details", "amount", "account_id"]
+
+    def create(self, validated_data):
+        account_id = validated_data.pop("account_id")
+        account = get_object_or_404(models.Account, id=account_id)
+        validated_data["account"] = account
+        expense = models.Expense.objects.create(**validated_data)
+        expense.save()
+        return expense
 
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ['id', 'name']
+        fields = ["id", "name"]
 
 
 class InventorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Inventory
-        fields= ['id', 'purchase_id', 'product_id','batch_number', 'expiry_date', 'pack_size',
-        'pack_cost', 'quantity','available_units'
-        ]
+        fields = ["id", "purchase_id", "product_id", "batch_number", "expiry_date", "pack_size",
+                  "pack_cost", "quantity", "available_units"
+                  ]
+
 
 class PackSizesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PackSize
-        fields = ['units', 'sale_price']
+        fields = ["units", "sale_price"]
 
 
 class ProductsSerializer(WritableNestedModelSerializer):
     pack_sizes = PackSizesSerializer(many=True)
+
     class Meta:
         model = models.Product
-        fields = ['id', 'name', 'generic_name', 'pack_sizes']
-
+        fields = ["id", "name", "generic_name", "pack_sizes"]
 
 
 class PurchaseItemsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Inventory
-        fields = ['id', 'product_id', 'batch_number','expiry_date', 'pack_size','pack_cost','quantity']
+        fields = ["id", "product_id", "batch_number",
+                  "expiry_date", "pack_size", "pack_cost", "quantity"]
 
-class PurchasesSerializer(WritableNestedModelSerializer):
+
+class PurchasesSerializer(serializers.ModelSerializer):
     items = PurchaseItemsSerializer(many=True)
+    supplier_id = serializers.IntegerField(source='supplier.id')
+
     class Meta:
         model = models.Purchase
-        fields = ['id', 'date', 'invoice', 'supplier_id','total', 'items']
-    
+        fields = ["id", "date", "invoice", "total", "items", "supplier_id"]
+
     def validate(self, data):
-        if data['total'] == sum([item['pack_cost']*item['quantity'] for item in data["items"]]):
+        if data["total"] == sum([item["pack_cost"]*item["quantity"] for item in data["items"]]):
             return data
-        raise serializers.ValidationError("The total of the invoice does not match the total of the items")
-    
+        raise serializers.ValidationError(
+            "The total of the invoice does not match the total of the items")
 
     def create(self, validated_data):
-        # Create a purchase
-        # Reduce the supplier account
-        supplier = validated_data["supplier"]
-        supplier_account = supplier.account
-        supplier_account.balance=validated_data.total
+        # TODO Use transactions
+        print(validated_data)
+        supplier_account = validated_data["supplier"].account
+        print("in the created data")
+
+        supplier_account.balance -= validated_data["total"]
         supplier_account.save()
-        purchase = super()
+
+        serializer_items = validated_data.pop("items")
+        # Entry.objects.bulk_create([
+        #     Entry(headline="Django 1.0 Released"),
+        #     Entry(headline="Django 1.1 Announced"),
+        #     Entry(headline="Breaking: Django is awesome")
+        # ])
+
+        items = [
+            models.Inventory(
+                **item
+            )
+            for item in serializer_items
+        ]
+
+        validated_data["items"] = items
+
+        purchase = models.Purchase.objects.create(**validated_data)
+        purchase.save()
         return purchase
 
 
 class SalesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Sale
-        fields = ['id', 'date', 'customer_id']
+        fields = ["id", "date", "customer_id", "items"]
 
 
 class SuppliersSerializer(serializers.ModelSerializer):
-    account_id = serializers.SerializerMethodField()
     class Meta:
         model = models.Supplier
-        fields = ['id', 'name', 'address', 'contact', 'account_id']
-    
-    def get_account_id(self, supplier):
-        return supplier.account_id.id
-
+        fields = ["id", "name", "address", "contact", "account_id"]
 
 
 class UsersSerializer(serializers.ModelSerializer):

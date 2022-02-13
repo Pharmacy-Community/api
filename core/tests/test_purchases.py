@@ -1,7 +1,7 @@
 import pytest
 from rest_framework import status
 from model_bakery import baker
-from core.models import Purchase, Supplier
+from core.models import Purchase, Supplier, Inventory
 from datetime import datetime
 
 
@@ -14,7 +14,38 @@ def create_purchase(api_client):
 
 @pytest.mark.django_db
 class TestCreatePurchase:
-    @pytest.mark.skip
+    required_permissions = ['Can add purchase']
+
+    def get_sample_test_purchase(self):
+        supplier = baker.make(Supplier)
+        number_of_items = 5
+        products = baker.make('Product', _quantity=number_of_items)
+
+        purchase_items = []
+        purchase_total = 0
+
+        for product in products:
+            inventory_item = baker.prepare(Inventory)
+            purchase_total += inventory_item.total
+            purchase_items.append({
+                'product_id': product.id,
+                'batch_number': inventory_item.batch_number,
+                'expiry_date': str(inventory_item.expiry_date),
+                'pack_size': inventory_item.pack_size,
+                'pack_cost': inventory_item.pack_cost,
+                'quantity': inventory_item.quantity
+            })
+
+        model_purchase = baker.prepare(Purchase)
+
+        return {
+            'date': str(model_purchase.date),
+            'invoice': model_purchase.invoice,
+            'supplier': supplier.id,
+            'total': model_purchase.total,
+            'items': purchase_items
+        }
+
     def test_if_un_authenticated_user_can_not_create_a_purchase(self, create_purchase):
         response = create_purchase({'invoice': '123'})
 
@@ -40,16 +71,8 @@ class TestCreatePurchase:
         assert response.data is not None
 
     def test_if_authorised_can_create_a_purchase(self, authenticate, create_purchase):
-        # Add Supplier
-        supplier = baker.make(Supplier)
-        authenticate(permissions=['Can add purchase'])
-
-        purchase = {
-            'date': str(datetime.now().date()),
-            'invoice': '123',
-            'supplier': supplier.id
-        }
-        # TODO Add Items
+        authenticate(permissions=self.required_permissions)
+        purchase = self.get_sample_test_purchase()
 
         response = create_purchase(purchase)
 
@@ -67,7 +90,6 @@ def view_purchases(api_client):
 @pytest.mark.django_db
 class TestViewPurchases:
 
-    @pytest.mark.skip
     def test_if_anonymous_user_can_not_view_purchases(self, view_purchases):
         response = view_purchases()
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -94,7 +116,6 @@ def view_purchase(api_client):
 
 @pytest.mark.django_db
 class TestViewPurchase:
-    @pytest.mark.skip
     def test_if_anonymous_user_can_not_view_purchase(self, view_purchase):
         purchase = baker.make(Purchase)
         response = view_purchase(purchase.id)
@@ -117,5 +138,7 @@ class TestViewPurchase:
             'id': purchase.id,
             'date': str(purchase.date),
             'invoice': purchase.invoice,
-            'supplier': purchase.supplier.id
+            'items': [],
+            'supplier_id': purchase.supplier_id,
+            'total': purchase.total
         }

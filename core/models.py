@@ -3,9 +3,11 @@ import django
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey,GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 
 # TODO Add User profile image
+
+
 class User(AbstractUser):
     email = models.EmailField(unique=True)
 
@@ -23,15 +25,17 @@ class Account(models.Model):
         BANK_CATEGORY,
         MOBBILE_MONEY_CATEGORY,
     )
-    name = models.CharField(max_length=255,null=False, blank=False, unique=True)
+    name = models.CharField(
+        max_length=255, null=False, blank=False, unique=True
+    )
     category = models.CharField(max_length=255, choices=ACCOUNT_CATEGORIES)
     balance = models.IntegerField()
 
     def __str__(self) -> str:
         return self.name
-    
+
     class Meta:
-        ordering=['name', 'id']
+        ordering = ['name', 'id']
 
 
 class AccountItem(models.Model):
@@ -45,6 +49,22 @@ class Customer(models.Model):
     name = models.CharField(max_length=255, unique=True)
     contact = models.CharField(max_length=13, null=True)
     address = models.CharField(max_length=255, null=True)
+    account = models.OneToOneField(Account, on_delete=models.PROTECT)
+
+    def save(self, *args, **kwargs):
+        # Remove any posted account_id
+        if 'account_id' in kwargs:
+            kwargs.pop('account_id')
+
+        # Create Customer Account
+        customer = Account(
+            name=self.name,
+            category=Account.CUSTOMER_CATEGORY[0],
+            balance=0
+        )
+        customer.save()
+        self.account_id = customer.id
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name
@@ -54,16 +74,16 @@ class Customer(models.Model):
 
 
 class Expense(models.Model):
-    account_id = models.ForeignKey(Account, on_delete=models.CASCADE)
+    account = models.ForeignKey('Account', on_delete=models.CASCADE)
     date = models.DateField(auto_created=True)
     details = models.CharField(max_length=255)
     amount = models.PositiveIntegerField()
 
     def __str__(self) -> str:
         return f"{self.details} for {self.amount}"
-    
+
     class Meta:
-        ordering=['-date', 'id']
+        ordering = ['-date', 'id']
 
 
 class Product(models.Model):
@@ -161,13 +181,13 @@ class SaleItem(models.Model):
 
 
 class Supplier(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    account = models.OneToOneField(Account, on_delete=models.PROTECT)
     name = models.CharField(max_length=255, unique=True)
     contact = models.CharField(max_length=13, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        # Remove any posted id
+        # Remove any posted account_id
         if 'account_id' in kwargs:
             kwargs.pop('account_id')
 
@@ -178,7 +198,7 @@ class Supplier(models.Model):
             balance=0
         )
         supplier_account.save()
-        self.account_id=supplier_account
+        self.account_id = supplier_account.id
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
