@@ -153,7 +153,7 @@ class Sale(models.Model):
     # Payment Method
     created_at = models.DateTimeField(auto_now_add=True)
     date = models.DateField(auto_created=True)
-    customer_id = models.ForeignKey(
+    customer = models.ForeignKey(
         Customer, on_delete=models.PROTECT, blank=True, null=True)
 
     @property

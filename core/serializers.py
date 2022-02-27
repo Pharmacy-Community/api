@@ -47,10 +47,23 @@ class ExpensesSerializer(serializers.ModelSerializer):
         return expense
 
 
+class GroupUsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = ['id']
+
+
 class GroupSerializer(serializers.ModelSerializer):
+    users = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=models.User.objects.all(),
+        source="user_set"
+
+    )
+    # users = GroupUsersSerializer(many=True)
+
     class Meta:
         model = Group
-        fields = ["id", "name"]
+        fields = ["id", "name", "users"]
 
 
 class InventorySerializer(serializers.ModelSerializer):
@@ -97,21 +110,10 @@ class PurchasesSerializer(serializers.ModelSerializer):
             "The total of the invoice does not match the total of the items")
 
     def create(self, validated_data):
-        # TODO Use transactions
-        print(validated_data)
         supplier_account = validated_data["supplier"].account
-        print("in the created data")
-
         supplier_account.balance -= validated_data["total"]
         supplier_account.save()
-
         serializer_items = validated_data.pop("items")
-        # Entry.objects.bulk_create([
-        #     Entry(headline="Django 1.0 Released"),
-        #     Entry(headline="Django 1.1 Announced"),
-        #     Entry(headline="Breaking: Django is awesome")
-        # ])
-
         items = [
             models.Inventory(
                 **item
@@ -139,9 +141,18 @@ class SuppliersSerializer(serializers.ModelSerializer):
 
 
 class UsersSerializer(serializers.ModelSerializer):
-    groups = GroupSerializer(many=True)
+    # groups = GroupSerializer(many=True)
+    groups = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Group.objects.all()
+    )
+    full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = models.User
-        fields = ["id", "first_name", "last_name", "username", "is_active",
-                  "email", "groups", "user_permissions", "is_superuser"]
+        fields = [
+            "id", "full_name", "first_name", "last_name", "username", "is_active",
+            "email", "groups", "user_permissions", "is_superuser"
+        ]
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()
